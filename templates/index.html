@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search for Member</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Search Member</h1>
+        <form id="searchForm">
+            <label for="dob">Enter Date of Birth (DD-MM-YYYY):</label>
+            <input type="text" id="dob" name="dob" placeholder="DD-MM-YYYY">
+            <button type="submit">Search</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // JavaScript to handle the form submission
+        document.getElementById('searchForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const dob = document.getElementById('dob').value;
+
+            // Send POST request to search endpoint
+            fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ dob: dob })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('result');
+                if (data.match) {
+                    // Display match details
+                    resultDiv.innerHTML = `
+                        <h2>Match Found</h2>
+                        <p><strong>Name:</strong> ${data.match.Name}</p>
+                        <p><strong>SR.NO:</strong> ${data.match.SRNO}</p>
+                        <p><strong>From Booklet:</strong> ${data.match.SourceFile}</p>
+                    `;
+                } else {
+                    // Display error message if no match
+                    resultDiv.innerHTML = '<p>No matching data found. Please check the DOB and try again.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = '<p>There was an error with the search request. Please try again later.</p>';
+            });
+        });
+    </script>
+</body>
+</html>
