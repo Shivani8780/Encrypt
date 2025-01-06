@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from datetime import datetime
-from flask import Flask, render_template_string, send_from_directory, request, jsonify
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
@@ -84,16 +84,10 @@ def read_excel_files():
                 print(f"Error reading file {filename}: {e}")
     return excel_files
 
-# Home route to render the HTML page from file (index.html in root directory)
+# Home route to render the HTML page
 @app.route('/')
 def index():
-    with open('index.html', 'r') as f:
-        return render_template_string(f.read())
-
-# Serve static files like CSS directly from root directory
-@app.route('/static/<path:filename>')
-def send_static(filename):
-    return send_from_directory('.', filename)
+    return render_template('index.html')
 
 # Search route to process the form and return results
 @app.route('/search', methods=['POST'])
