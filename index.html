@@ -3,36 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search by DOB</title>
-    <link rel="stylesheet" href="/styles.css">  <!-- Link directly to /styles.css -->
+    <title>Search DOB</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Search for Person by Date of Birth</h1>
-    <form id="dob-form">
-        <label for="dob">Enter Date of Birth (DD-MM-YYYY):</label>
-        <input type="text" id="dob" name="dob" required>
-        <button type="submit">Search</button>
-    </form>
-    <div id="result"></div>
+    <div class="container">
+        <h1>Search by Date of Birth</h1>
+        <form id="searchForm">
+            <input type="text" id="dob" name="dob" placeholder="Enter Date of Birth (DD-MM-YYYY)" required>
+            <button type="submit">Search</button>
+        </form>
+        <div id="result"></div>
+    </div>
 
     <script>
-        document.getElementById('dob-form').addEventListener('submit', function(e) {
+        const form = document.getElementById('searchForm');
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const dob = document.getElementById('dob').value;
-            fetch('/search', {
+
+            const response = await fetch('/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dob: dob })
-            })
-            .then(response => response.json())
-            .then(data => {
-                const resultDiv = document.getElementById('result');
-                if (data.match) {
-                    resultDiv.innerHTML = `<p>Match found: Name: ${data.match.Name}, SRNO: ${data.match.SRNO}, Source File: ${data.match.SourceFile}</p>`;
-                } else {
-                    resultDiv.innerHTML = `<p>${data.error}</p>`;
-                }
+                body: JSON.stringify({ dob })
             });
+
+            const data = await response.json();
+
+            if (data.match) {
+                document.getElementById('result').innerHTML = `
+                    <p>Found: ${data.match.Name}, SRNO: ${data.match.SRNO}, Source File: ${data.match.SourceFile}</p>
+                `;
+            } else {
+                document.getElementById('result').innerHTML = `
+                    <p>${data.error}</p>
+                `;
+            }
         });
     </script>
 </body>

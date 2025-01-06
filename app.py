@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_from_directory
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='', static_folder='.')
 
 # Folder where Excel files are stored
 EXCEL_FILES_FOLDER = 'excel_files'
@@ -84,15 +84,12 @@ def read_excel_files():
                 print(f"Error reading file {filename}: {e}")
     return excel_files
 
-# Route to serve custom CSS file
-@app.route('/styles.css')
-def serve_css():
-    return send_from_directory(os.getcwd(), 'styles.css')  # Serve 'styles.css' from the root directory
-
+# Home route to render the HTML page
 @app.route('/')
 def index():
-    return send_from_directory(os.getcwd(), 'index.html')  # Serve 'index.html' from the root directory
+    return render_template('index.html')
 
+# Search route to process the form and return results
 @app.route('/search', methods=['POST'])
 def search():
     data = request.get_json()
@@ -111,6 +108,11 @@ def search():
             print(f"No match found in file {filename}")  # Debugging output
 
     return jsonify({"match": None, "error": "No matching data found. Please check the DOB and try again."})
+
+# To serve static files like CSS
+@app.route('/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('.', filename)
 
 if __name__ == "__main__":
     app.run(debug=True)
