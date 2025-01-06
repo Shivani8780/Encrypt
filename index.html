@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search DOB</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Search for a Person by Date of Birth</h1>
+        <form id="searchForm">
+            <label for="dob">Date of Birth (DD-MM-YYYY or DD/MM/YYYY):</label>
+            <input type="text" id="dob" name="dob" required>
+            <button type="submit">Search</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const dob = document.getElementById('dob').value;
+
+            fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ dob: dob })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('result');
+                if (data.match) {
+                    resultDiv.innerHTML = `
+                        <h2>Match Found</h2>
+                        <p>Name: ${data.match.Name}</p>
+                        <p>SRNO: ${data.match.SRNO}</p>
+                        <p>Source File: ${data.match.SourceFile}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p>${data.error}</p>`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
