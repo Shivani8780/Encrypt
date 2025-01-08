@@ -14,30 +14,43 @@
             <button type="submit">Search</button>
         </form>
         <div id="result"></div>
+        <div id="error"></div>
     </div>
 
     <script>
         const form = document.getElementById('searchForm');
+        const resultDiv = document.getElementById('result');
+        const errorDiv = document.getElementById('error');
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const dob = document.getElementById('dob').value;
 
-            const response = await fetch('/search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dob })
-            });
+            resultDiv.innerHTML = ''; // Clear previous results
+            errorDiv.innerHTML = ''; // Clear previous errors
 
-            const data = await response.json();
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ dob: dob })
+                });
+                const data = await response.json();
 
-            if (data.match) {
-                document.getElementById('result').innerHTML = `
-                    <p>Found: ${data.match.Name}, SRNO: ${data.match.SRNO}, Source File: ${data.match.SourceFile}</p>
-                `;
-            } else {
-                document.getElementById('result').innerHTML = `
-                    <p>${data.error}</p>
-                `;
+                if (data.match) {
+                    const result = data.match;
+                    resultDiv.innerHTML = `
+                        <div id="booklet">BOOKLET NAME: ${result.SourceFile}</div>
+                        <div id="srno">SRNO: ${result.SRNO}</div>
+                        <div id="name">Name: ${result.Name}</div>
+                    `;
+                } else {
+                    errorDiv.innerHTML = data.error || 'No matching data found.';
+                }
+            } catch (error) {
+                errorDiv.innerHTML = 'An error occurred while searching.';
             }
         });
     </script>

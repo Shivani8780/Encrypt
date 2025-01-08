@@ -1,46 +1,98 @@
-body {
-    font-family: Arial, sans-serif;
+/* General Reset */
+* {
     margin: 0;
     padding: 0;
-    background-color: #f4f4f9;
+    box-sizing: border-box;
 }
 
-.container {
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
+/* Body Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f9fafc;
+    color: #333;
+    line-height: 1.6;
     padding: 20px;
-    background-color: white;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
-h1 {
+/* Container Styling */
+.container {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
     text-align: center;
 }
 
-input[type="text"] {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+/* Heading Styling */
+h1 {
+    font-size: 24px;
+    color: #007bff;
+    margin-bottom: 20px;
 }
 
+/* Input Styling */
+input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+/* Button Styling */
 button {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     background-color: #007bff;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 4px;
+    font-size: 16px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 button:hover {
     background-color: #0056b3;
 }
 
+/* Result Styling */
 #result {
     margin-top: 20px;
+    padding: 15px;
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: left;
+    white-space: pre-line; /* Ensures new lines are preserved */
+    font-size: 16px;
+    color: #444;
+}
+
+/* SRNO Styling - Blue Color */
+#srno {
+    font-size: 16px;
     font-weight: bold;
+    color: #007bff; /* Blue color for SRNO */
+}
+
+/* BOOKLET Name Styling */
+#booklet {
+    font-size: 16px;
+    font-weight: normal;
+    color: #333;
+}
+
+/* Name Styling */
+#name {
+    font-size: 16px;
+    font-weight: normal;
+    color: #333;
 }
