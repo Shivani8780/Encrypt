@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from datetime import datetime
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, render_template
 
 app = Flask(__name__, static_url_path='', static_folder='.')
 
@@ -71,10 +71,10 @@ def read_excel_files():
                 print(f"Error reading file {filename}: {e}")
     return excel_files
 
-# Serve the index.html file directly
+# Serve the index.html file from the templates folder
 @app.route('/')
 def index():
-    return send_from_directory('.', 'index.html')
+    return render_template('index.html')  # Flask will look for 'index.html' in the 'templates' folder
 
 # Search route to process the form and return results
 @app.route('/search', methods=['POST'])
