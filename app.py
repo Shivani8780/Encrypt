@@ -1,101 +1,104 @@
-import os
-import pandas as pd
-from datetime import datetime
-from flask import Flask, request, jsonify, send_from_directory, render_template
+from flask import Flask, request, send_file, render_template
+from PyPDF2 import PdfReader, PdfWriter
+from reportlab.lib.pagesizes import landscape, A4
+from reportlab.pdfgen import canvas
+import io
 
-app = Flask(__name__, static_url_path='', static_folder='.')
+app = Flask(__name__)
 
-# Folder where Excel files are stored
-EXCEL_FILES_FOLDER = 'excel_files'
+# Function to create watermark PDF in memory
+def create_watermark(text, position):
+    # Using landscape A4 page size (841.890 x 595.276)
+    packet = io.BytesIO()
+    c = canvas.Canvas(packet, pagesize=landscape(A4))
+    width, height = landscape(A4)
+    
+    # Set watermark text properties
+    c.setFont("Helvetica-Bold", 14)  # Font size 14
+    c.setFillColorRGB(0, 0, 1, alpha=0.5)  # Blue color with transparency
 
-# Function to parse DOB in multiple formats
-def parse_date(dob):
-    formats = ["%d-%m-%Y", "%d/%m/%Y"]
-    for fmt in formats:
-        try:
-            return datetime.strptime(dob, fmt).date()
-        except ValueError:
-            continue
-    return None
+    # Positioning for watermark
+    if position == 'top':
+        x = width / 2 - (len(text) * 2.5)  # Center horizontally
+        y = height - 15  # Very top of the page, slightly down (15 units)
+    elif position == 'bottom':
+        x = width / 2 - (len(text) * 2.5)  # Center horizontally
+        y = 15  # Very bottom of the page, slightly up (15 units)
 
-# Function to clean up and normalize column names
-def clean_column_names(df):
-    df.columns = df.columns.str.strip().str.lower()
-    df.columns = df.columns.str.replace(r'[^a-zA-Z0-9 ]', '', regex=True)
-    return df
+    # Draw watermark text
+    c.drawString(x, y, text)
+    c.save()
+    
+    # Return in-memory file
+    packet.seek(0)
+    return packet
 
-# Function to find a person by Date of Birth
-def find_person_by_dob(df, dob, filename):
-    dob = parse_date(dob)
-    if not dob:
-        print(f"Invalid DOB format: {dob}")
-        return None
+# Function to apply watermark to PDF (using in-memory handling)
+def add_watermark_to_pdf(input_pdf, watermark_pdf):
+    reader = PdfReader(input_pdf)
+    watermark = PdfReader(watermark_pdf)
+    writer = PdfWriter()
 
-    df = clean_column_names(df)
-    dob_column = next((col for col in df.columns if 'dob' in col), None)
-    name_column = next((col for col in df.columns if 'name' in col), None)
-    srno_column = next((col for col in df.columns if 'srno' in col), None)
+    for page_num in range(len(reader.pages)):
+        page = reader.pages[page_num]
+        watermark_page = watermark.pages[0]
+        
+        # Merge watermark on top of the original page
+        page.merge_page(watermark_page)
+        writer.add_page(page)
 
-    if not dob_column or not name_column or not srno_column:
-        print(f"Required columns not found in file {filename}. Skipping file.")
-        return None
+    # Return in-memory PDF
+    output_pdf = io.BytesIO()
+    writer.write(output_pdf)
+    output_pdf.seek(0)
+    return output_pdf
 
-    df['dob'] = pd.to_datetime(df[dob_column], errors='coerce', dayfirst=True).dt.date
-    matched_rows = df[df['dob'] == dob]
-
-    if not matched_rows.empty:
-        results = []
-        for _, row in matched_rows.iterrows():
-            source_file = filename.replace('.xlsx', '').replace('.xls', '')
-            results.append({
-                "Name": row.get(name_column, 'N/A'),
-                "SRNO": row.get(srno_column, 'N/A'),
-                "SourceFile": f"{source_file}"
-            })
-        return results
-    else:
-        return None
-
-# Function to read all Excel files from the directory
-def read_excel_files():
-    excel_files = []
-    for filename in os.listdir(EXCEL_FILES_FOLDER):
-        if filename.endswith(('.xls', '.xlsx')) and not filename.startswith('~$'):
-            filepath = os.path.join(EXCEL_FILES_FOLDER, filename)
-            try:
-                df = pd.read_excel(filepath)
-                df = clean_column_names(df)
-                if any('dob' in col for col in df.columns) and any('name' in col for col in df.columns) and any('srno' in col for col in df.columns):
-                    excel_files.append((filename, df))
-            except Exception as e:
-                print(f"Error reading file {filename}: {e}")
-    return excel_files
-
-# Serve the index.html file from the templates folder
 @app.route('/')
 def index():
-    return render_template('index.html')  # Flask will look for 'index.html' in the 'templates' folder
+    return render_template('index.html')
 
-# Search route to process the form and return results
-@app.route('/search', methods=['POST'])
-def search():
-    data = request.get_json()
-    dob = data.get('dob', '').strip()
+@app.route('/encrypt', methods=['POST'])
+def encrypt_pdf():
+    if 'pdf_file' not in request.files or not request.form['password'] or not request.form['watermark_name'] or not request.form['custom_pdf_name']:
+        return "Missing file, password, watermark name, or custom PDF name", 400
 
-    if not dob:
-        return jsonify({"match": None, "error": "Please enter a valid Date of Birth."})
+    pdf_file = request.files['pdf_file']
+    password = request.form['password']
+    watermark_name = request.form['watermark_name']
+    custom_pdf_name = request.form['custom_pdf_name']
 
-    excel_files = read_excel_files()
-    for filename, df in excel_files:
-        result = find_person_by_dob(df, dob, filename)
-        if result:
-            return jsonify({"match": result[0]})
-    return jsonify({"match": None, "error": "No matching data found. Please check the DOB and try again."})
+    if pdf_file.filename == '':
+        return "No file selected", 400
 
-# Serve CSS file directly
-@app.route('/styles.css')
-def serve_css():
-    return send_from_directory('.', 'styles.css')
+    # Read the uploaded PDF into memory
+    input_pdf = io.BytesIO(pdf_file.read())
 
-if __name__ == "__main__":
+    # Create custom watermarks in memory
+    watermark_top = create_watermark(f"{watermark_name}", 'top')
+    watermark_bottom = create_watermark(f"{watermark_name} ", 'bottom')
+
+    try:
+        # Apply watermarks
+        watermarked_pdf = add_watermark_to_pdf(input_pdf, watermark_top)
+        final_pdf = add_watermark_to_pdf(watermarked_pdf, watermark_bottom)
+
+        # Encrypt the final PDF
+        writer = PdfWriter()
+        reader = PdfReader(final_pdf)
+        for page in reader.pages:
+            writer.add_page(page)
+        writer.encrypt(password)
+
+        # Write the encrypted PDF to a BytesIO object (in-memory)
+        output_pdf = io.BytesIO()
+        writer.write(output_pdf)
+        output_pdf.seek(0)
+
+        # Send the encrypted PDF for download with the custom name
+        return send_file(output_pdf, as_attachment=True, download_name=f"{custom_pdf_name}.pdf")
+
+    except Exception as e:
+        return f"An error occurred: {str(e)}", 500
+
+if __name__ == '__main__':
     app.run(debug=True)

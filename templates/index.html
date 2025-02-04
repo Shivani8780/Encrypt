@@ -3,54 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search DOB</title>
+    <title>Encrypt PDF</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Search by Date of Birth</h1>
-        <form id="searchForm">
-            <input type="text" id="dob" name="dob" placeholder="Enter Date of Birth (DD-MM-YYYY)" required>
-            <button type="submit">Search</button>
+        <h1>Encrypt Your PDF</h1>
+        <form id="pdf-form" action="/encrypt" method="POST" enctype="multipart/form-data">
+            <input type="file" name="pdf_file" accept="application/pdf" required>
+            <input type="password" name="password" placeholder="Enter Password" required>
+            <input type="text" name="watermark_name" placeholder="Enter Watermark Text" required>
+            <input type="text" name="custom_pdf_name" placeholder="Enter Custom PDF Name" required>
+            <button type="submit">Encrypt & Download</button>
         </form>
-        <div id="result"></div>
-        <div id="error"></div>
+        <p class="message">Upload a PDF and provide a password to encrypt it.</p>
     </div>
-
     <script>
-        const form = document.getElementById('searchForm');
-        const resultDiv = document.getElementById('result');
-        const errorDiv = document.getElementById('error');
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const dob = document.getElementById('dob').value;
-
-            resultDiv.innerHTML = ''; // Clear previous results
-            errorDiv.innerHTML = ''; // Clear previous errors
-
-            try {
-                const response = await fetch('/search', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ dob: dob })
-                });
-                const data = await response.json();
-
-                if (data.match) {
-                    const result = data.match;
-                    resultDiv.innerHTML = `
-                        <div id="booklet">BOOKLET NAME: ${result.SourceFile}</div>
-                        <div id="srno">SRNO: ${result.SRNO}</div>
-                        <div id="name">Name: ${result.Name}</div>
-                    `;
-                } else {
-                    errorDiv.innerHTML = data.error || 'No matching data found.';
-                }
-            } catch (error) {
-                errorDiv.innerHTML = 'An error occurred while searching.';
+        document.getElementById('pdf-form').addEventListener('submit', function (e) {
+            const password = document.querySelector('input[name="password"]').value;
+            if (password.length < 6) {
+                e.preventDefault();
+                alert("Password must be at least 6 characters long.");
             }
         });
     </script>
